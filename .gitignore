@@ -1,0 +1,19 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Local editor/tooling settings (machine-specific; may contain local paths)
+.claude/
+
+# Transient benchmark output (regenerable via runner.py with the dummy model)
+results.csv
+
+# Teacher sidecar for manual review (regenerable)
+*.sin_dato.json
+
+# Never commit secrets
+.env
+*.key

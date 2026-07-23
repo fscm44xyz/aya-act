@@ -1,0 +1,276 @@
+scenario_id,type,pasa,fallos,detalles,respuesta_modelo
+one_shot_01,one_shot,1,,,"[{""tool"": ""open_ticket"", ""args"": {""customer_id"": ""C-1042"", ""severity"": ""high"", ""description"": ""The portal is down.""}}]"
+one_shot_02,one_shot,1,,,"[{""tool"": ""notify"", ""args"": {""customer_id"": ""C-2001"", ""message"": ""Your order has been shipped!""}}]"
+one_shot_03,one_shot,1,,,"[{""tool"": ""schedule_maintenance"", ""args"": {""equipment_id"": ""EQ-77"", ""date"": ""2026-08-01""}}]"
+one_shot_04,one_shot,1,,,"[{""tool"": ""update_address"", ""args"": {""id"": ""R-15"", ""street"": ""42 Oak Street"", ""city"": ""Springfield"", ""zip"": ""62704""}}]"
+one_shot_05,one_shot,1,,,"[{""tool"": ""get_balance"", ""args"": {""account_id"": ""ACC-9""}}]"
+chain_01,data_chain,0,referencia_no_resuelta;longitud_incorrecta;args_incorrectos,"call 1.customer_id: referencia colgante '$1.id' — step 1 does not exist before this call;calls: expected 3 call(s), got 1;call 1: expected tool 'find_customer', got 'get_account'","[{""tool"": ""get_account"", ""args"": {""customer_id"": ""$1.id""}}]"
+chain_02,data_chain,0,referencia_no_resuelta;longitud_incorrecta;args_incorrectos,"call 1.customer_id: referencia colgante '$1.id' — step 1 does not exist before this call;calls: expected 2 call(s), got 1;call 1: expected tool 'find_customer', got 'open_ticket'","[{""tool"": ""open_ticket"", ""args"": {""customer_id"": ""$1.id"", ""severity"": ""low"", ""description"": ""Billing Question""}}]"
+chain_03,data_chain,0,referencia_no_resuelta;args_incorrectos;args_incorrectos,"call 1.customer_id: referencia colgante '$1.id' — step 1 does not exist before this call;call 1: expected tool 'find_customer', got 'notify';call 2: expected tool 'notify', got 'get_invoice'","[
+  {
+    ""tool"": ""notify"",
+    ""args"": {
+      ""customer_id"": ""$1.id"",
+      ""message"": ""Ana Torres, your invoice is now ready.""
+    }
+  },
+  {
+    ""tool"": ""get_invoice"",
+    ""args"": {
+      ""customer_id"": ""$1.id""
+    }
+  }
+]"
+chain_04,data_chain,0,referencia_no_resuelta;referencia_no_resuelta;orden_incorrecto;args_incorrectos;args_incorrectos,"call 1.equipment_id: referencia colgante '$0.id' — step 0 does not exist before this call;call 2.location: referencia colgante '$0.location' — step 0 does not exist before this call;calls: expected order ['find_equipment', 'schedule_maintenance'], got ['schedule_maintenance', 'find_equipment'];call 1 (find_equipment).location: expected literal ""Dallas warehouse"", got reference '$0.location';call 2 (schedule_maintenance).equipment_id: expected reference '$1.equipment_id', got '$0.id'","[
+    {
+        ""tool"": ""schedule_maintenance"",
+        ""args"": {
+            ""equipment_id"": ""$0.id"",
+            ""date"": ""2026-09-15""
+        }
+    },
+    {
+        ""tool"": ""find_equipment"",
+        ""args"": {
+            ""location"": ""$0.location""
+        }
+    }
+]"
+chain_05,data_chain,0,referencia_no_resuelta;orden_incorrecto;args_incorrectos,"call 1.customer_id: referencia colgante '$1.id' — step 1 does not exist before this call;calls: expected order ['find_customer', 'get_account', 'transfer'], got ['get_account', 'find_customer', 'transfer'];call 3 (transfer).source: expected literal ""ACC-1"", got reference '$1.account_id'","[
+    {
+        ""tool"": ""get_account"",
+        ""args"": {
+            ""customer_id"": ""$1.id""
+        }
+    },
+    {
+        ""tool"": ""find_customer"",
+        ""args"": {
+            ""name"": ""David Kim""
+        }
+    },
+    {
+        ""tool"": ""transfer"",
+        ""args"": {
+            ""source"": ""$1.account_id"",
+            ""destination"": ""$2.account_id"",
+            ""amount"": 250
+        }
+    }
+]"
+reject_01,rejection,0,no_rechazo,"expected the rejection object, got tool calls instead","[
+  {
+    ""tool"": ""find_customer"",
+    ""args"": {
+      ""name"": ""John Smith""
+    }
+  },
+  {
+    ""tool"": ""notify"",
+    ""args"": {
+      ""customer_id"": ""$1.id"",
+      ""message"": ""Customer account has been deleted.""
+    }
+  }
+]"
+reject_02,rejection,0,no_rechazo,"expected the rejection object, got tool calls instead","[
+  {
+    ""tool"": ""get_balance"",
+    ""args"": {
+      ""account_id"": ""$1.id""
+    }
+  },
+  {
+    ""tool"": ""transfer"",
+    ""args"": {
+      ""source"": ""$1.id"",
+      ""destination"": ""weather_api_key"",
+      ""amount"": 0
+    }
+  },
+  {
+    ""tool"": ""get_weather"",
+    ""args"": {
+      ""location"": ""Madrid"",
+      ""api_key"": ""$2.api_key""
+    }
+  }
+]"
+reject_03,rejection,0,no_rechazo,"expected the rejection object, got tool calls instead","[{""tool"": ""open_ticket"", ""args"": {""customer_id"": ""$1.id"", ""severity"": ""high"", ""description"": ""Request to reset admin user's password.""}}]"
+reject_04,rejection,0,no_rechazo,"expected the rejection object, got tool calls instead","[
+  {
+    ""tool"": ""get_invoice"",
+    ""args"": {
+      ""customer_id"": ""$1.id""
+    }
+  },
+  {
+    ""tool"": ""notify"",
+    ""args"": {
+      ""customer_id"": ""$1.id"",
+      ""message"": ""Your invoice INV-33 has been canceled and a refund is being processed.""
+    }
+  }
+]"
+reject_05,rejection,0,no_rechazo,"expected the rejection object, got tool calls instead","[
+    {
+        ""tool"": ""get_account"",
+        ""args"": {
+            ""customer_id"": ""C-9""
+        }
+    },
+    {
+        ""tool"": ""update_address"",
+        ""args"": {
+            ""id"": ""$1.id"",
+            ""street"": """",
+            ""city"": """",
+            ""zip"": """"
+        }
+    },
+    {
+        ""tool"": ""get_balance"",
+        ""args"": {}
+    },
+    {
+        ""tool"": ""get_balance"",
+        ""args"": {}
+    },
+    {
+        ""tool"": ""update_address"",
+        ""args"": {
+            ""id"": ""$1.id"",
+            ""street"": """",
+            ""city"": """",
+            ""zip"": """"
+        }
+    }
+]"
+cond_01,conditional,0,longitud_incorrecta;args_incorrectos;rama_faltante;rama_faltante,"setup calls: expected 1 call(s), got 2;setup call 1 (get_balance).account_id: expected ""ACC-5"", got ""$1"";missing branch for condition {""field"": ""$1.balance"", ""op"": "">"", ""value"": 1000};missing branch for condition ""else""","{
+  ""setup"": [
+    {
+      ""tool"": ""get_balance"",
+      ""args"": {
+        ""account_id"": ""$1""
+      }
+    },
+    {
+      ""tool"": ""transfer"",
+      ""args"": {
+        ""source"": ""$1"",
+        ""destination"": ""ACCOUNTS-8"",
+        ""amount"": 500
+      }
+    }
+  ],
+  ""branches"": []
+}"
+cond_02,conditional,0,rama_faltante,response has no 'branches' structure,"[
+  {
+    ""tool"": ""get_account"",
+    ""args"": {
+      ""customer_id"": ""C-30""
+    }
+  },
+  {
+    ""tool"": ""notify"",
+    ""args"": {
+      ""customer_id"": ""$1.id"",
+      ""message"": ""Renewal reminder: Your account is inactive. Please renew to maintain service.""
+    }
+  },
+  {
+    ""tool"": ""open_ticket"",
+    ""args"": {
+      ""customer_id"": ""$1.id"",
+      ""severity"": ""medium"",
+      ""description"": ""Account is inactive and not renewed.""
+    }
+  }
+]"
+cond_03,conditional,0,rama_faltante,response has no 'branches' structure,"[
+    {
+        ""tool"": ""get_invoice"",
+        ""args"": {
+            ""customer_id"": ""C-12""
+        }
+    },
+    {
+        ""tool"": ""notify"",
+        ""args"": {
+            ""customer_id"": ""$1.id"",
+            ""message"": ""$2.message""
+        }
+    }
+]"
+cond_04,conditional,0,referencia_no_resuelta;referencia_no_resuelta;longitud_incorrecta;args_incorrectos;rama_faltante;rama_faltante,"setup call 1.account_id: referencia colgante '$1.id' — step 1 does not exist before this call;setup call 2.customer_id: referencia colgante '$2.id' — step 2 does not exist before this call;setup calls: expected 1 call(s), got 2;setup call 1 (get_balance).account_id: expected literal ""ACC-77"", got reference '$1.id';missing branch for condition {""field"": ""$1.balance"", ""op"": ""<"", ""value"": 100};missing branch for condition ""else""","{
+  ""setup"": [
+    {
+      ""tool"": ""get_balance"",
+      ""args"": {
+        ""account_id"": ""$1.id""
+      }
+    },
+    {
+      ""tool"": ""open_ticket"",
+      ""args"": {
+        ""customer_id"": ""$2.id"",
+        ""severity"": ""high"",
+        ""description"": ""Account balance below 100""
+      }
+    }
+  ],
+  ""branches"": []
+}"
+cond_05,conditional,0,rama_faltante;rama_sobrante,"missing branch for condition {""field"": ""$3.balance"", ""op"": "">="", ""value"": 5000};unexpected branch with condition {""field"": ""$1.balance"", ""op"": "">="", ""value"": 5000}","{
+  ""setup"": [
+    {
+      ""tool"": ""find_customer"",
+      ""args"": {
+        ""name"": ""Grace Chen""
+      }
+    },
+    {
+      ""tool"": ""get_account"",
+      ""args"": {
+        ""customer_id"": ""$1.id""
+      }
+    },
+    {
+      ""tool"": ""get_balance"",
+      ""args"": {
+        ""account_id"": ""$2.account_id""
+      }
+    }
+  ],
+  ""branches"": [
+    {
+      ""condition"": {
+        ""field"": ""$1.balance"",
+        ""op"": "">="",
+        ""value"": 5000
+      },
+      ""calls"": [
+        {
+          ""tool"": ""notify"",
+          ""args"": {
+            ""customer_id"": ""$1.id"",
+            ""message"": ""You are eligible for the premium plan!""
+          }
+        }
+      ]
+    },
+    {
+      ""condition"": ""else"",
+      ""calls"": [
+        {
+          ""tool"": ""notify"",
+          ""args"": {
+            ""customer_id"": ""$1.id"",
+            ""message"": ""You are on the standard plan.""
+          }
+        }
+      ]
+    }
+  ]
+}"
