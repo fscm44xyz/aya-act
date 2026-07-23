@@ -15,7 +15,25 @@ from peft import PeftModel
 from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 
 
-def make_local_model(base_model_id, adapter_path, max_new_tokens=512):
+def _stop_token_ids(tokenizer):
+    """Collect the ids that should end generation.
+
+    Aya ends an assistant turn with <|END_OF_TURN_TOKEN|>; include it
+    alongside the standard eos so greedy decoding stops at the turn
+    boundary instead of running to max_new_tokens.
+    """
+    ids = []
+    if tokenizer.eos_token_id is not None:
+        ids.append(tokenizer.eos_token_id)
+    end_turn = tokenizer.convert_tokens_to_ids("<|END_OF_TURN_TOKEN|>")
+    if (isinstance(end_turn, int) and end_turn >= 0
+            and end_turn != tokenizer.unk_token_id):
+        ids.append(end_turn)
+    # De-duplicate, preserve order.
+    return list(dict.fromkeys(ids)) or None
+
+
+def make_local_model(base_model_id, adapter_path, max_new_tokens=200):
     """Load base + LoRA adapter once; return a (prompt) -> text function."""
     bnb_config = BitsAndBytesConfig(
         load_in_4bit=True,
@@ -36,9 +54,13 @@ def make_local_model(base_model_id, adapter_path, max_new_tokens=512):
 
     # Tokenizer from the adapter dir: it holds the training chat template.
     tokenizer = AutoTokenizer.from_pretrained(adapter_path)
+
+    eos_ids = _stop_token_ids(tokenizer)
     pad_id = tokenizer.pad_token_id
     if pad_id is None:
         pad_id = tokenizer.eos_token_id
+
+    state = {"n": 0}
 
     def model_fn(prompt):
         # Render the single user turn with the chat template (adds Aya turn
@@ -62,11 +84,17 @@ def make_local_model(base_model_id, adapter_path, max_new_tokens=512):
                 input_ids=inputs["input_ids"],
                 attention_mask=inputs["attention_mask"],
                 max_new_tokens=max_new_tokens,
-                do_sample=False,
+                do_sample=False,          # greedy, deterministic
+                eos_token_id=eos_ids,     # stop at eos OR end-of-turn
                 pad_token_id=pad_id,
             )
 
         new_tokens = outputs[0][inputs["input_ids"].shape[-1]:]
-        return tokenizer.decode(new_tokens, skip_special_tokens=True)
+        result = tokenizer.decode(new_tokens, skip_special_tokens=True)
+
+        state["n"] += 1
+        print(f"  [local] scenario {state['n']} done "
+              f"({new_tokens.shape[-1]} tokens)", flush=True)
+        return result
 
     return model_fn
