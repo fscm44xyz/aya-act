@@ -23,8 +23,8 @@ from transformers import AutoModelForCausalLM, AutoTokenizer, BitsAndBytesConfig
 from trl import SFTConfig, SFTTrainer
 
 MODEL_ID = "CohereLabs/tiny-aya-global"
-DATA_FILE = "train.jsonl"
-OUTPUT_DIR = "tiny-aya-agent-v1"
+DATA_FILE = "train_80.jsonl"
+OUTPUT_DIR = "tiny-aya-agent-v2"
 CHAT_TEMPLATE_PATH = "/workspace/trl/examples/scripts/tiny_aya_chat_template.jinja"
 
 
