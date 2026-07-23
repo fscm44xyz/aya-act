@@ -212,15 +212,24 @@ def main():
     parser.add_argument("--model", default="",
                         help="model name; omit to use the built-in dummy")
     parser.add_argument("--provider", default="ollama",
-                        choices=["ollama", "cohere"],
+                        choices=["ollama", "cohere", "local"],
                         help="provider for --model (default ollama)")
+    parser.add_argument("--adapter", default="",
+                        help="LoRA adapter path (required for --provider local)")
     parser.add_argument("--langs", default="",
                         help="comma-separated validation languages (es,pt,hi)")
     parser.add_argument("--csv", default="results.csv", help="output CSV path")
     args = parser.parse_args()
     langs = [l for l in args.langs.split(",") if l]
 
-    if args.model:
+    if args.provider == "local":
+        if not args.adapter:
+            parser.error("--provider local requires --adapter PATH")
+        from local_model import make_local_model
+        base = args.model or "CohereLabs/tiny-aya-global"
+        model_fn = make_local_model(base, args.adapter)
+        print(f"Running against local model: {base} + adapter {args.adapter}\n")
+    elif args.model:
         if args.provider == "cohere":
             from cohere_model import make_cohere_model
             model_fn = make_cohere_model(args.model)
